@@ -4,12 +4,12 @@ plugins {
 }
 
 android {
-    compileSdkVersion 30
+    compileSdk 33
 
     defaultConfig {
         applicationId "com.su.charging"
         minSdkVersion 21
-        targetSdkVersion 30
+        targetSdk 33
         versionCode 10
         versionName "2.4"
 
