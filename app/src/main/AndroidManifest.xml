@@ -32,7 +32,8 @@
 
         <activity
             android:name="com.su.charging.view.activity.MainActivity"
-            android:screenOrientation="portrait">
+            android:screenOrientation="portrait"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
