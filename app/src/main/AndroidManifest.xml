@@ -28,7 +28,7 @@
             android:excludeFromRecents="true"
             android:launchMode="singleInstance"
             android:screenOrientation="portrait"
-            android:theme="@style/Theme.Charge" />
+            android:theme="@style/Theme.ChargingWorkshop"
 
         <activity
             android:name="com.su.charging.view.activity.MainActivity"
