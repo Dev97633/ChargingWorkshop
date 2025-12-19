@@ -1,4 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <string name="app_name">充电工坊</string>
     <string name="charge_task">charge_task</string>
     <string name="charge_service">charge_service</string>
@@ -19,18 +21,14 @@
     <string name="start_use_text">开始使用</string>
     <string name="sound_list">音频列表</string>
 
-    <!-- ✅ FIXED -->
-    <string name="video_res_path_format" formatted="false">
-普通充电：
+    <!-- IMPORTANT: formatted="false" + NO indentation -->
+    <string name="video_res_path_format" formatted="false">普通充电：
 %s
 
 快速充电：
-%s
-    </string>
+%s</string>
 
-    <!-- ✅ FIXED -->
-    <string name="audio_setting_help" formatted="false">
-目前音频支持在五种状态下播放
+    <string name="audio_setting_help" formatted="false">目前音频支持在五种状态下播放
 分别是：
 1.低电量:0-20%电量
 2.中电量:21-70%电量
@@ -40,20 +38,8 @@
 其他提示:
 1.点击音频可以弹出相应菜单，添加不同状态的Flag可以让它在不同状态下被播放。
 2.一个音频支持设置多个Flag，一个状态存在多个音频则随机抽取一个播放。
-3.当已有Flag时重复设置则清除该Flag
-    </string>
+3.当已有Flag时重复设置则清除该Flag</string>
 
-    <string name="per_desc">
-以上需要自行授权的权限在不同系统上有不同表示。如果在运行过程中发现不能非应用或锁屏界面显示很可能就是系统上有特殊权限限制了，需要自行找到对应权限授权。
-    </string>
-</resources>        4.充满:100%(充满后会一直播放语音，应该没人想要充满了还一直插着吧..？)\n
-        5.拔出\n
-        其他提示:\n
-        1.点击音频可以弹出相应菜单，添加不同状态的Flag可以让它在不同状态下被播放。\n
-        2.一个音频支持设置多个Flag，一个状态存在多个音频则随机抽取一个播放。\n
-        3.当已有Flag时重复设置则清除该Flag\n
-    </string>
-    <string name="per_desc">
-        以上需要自行授权的权限在不同系统上有不同表示。如果在运行过程中发现不能非应用或锁屏界面显示很可能就是系统上有特殊权限限制了，需要自行找到对应权限授权。
-    </string>
+    <string name="per_desc">以上需要自行授权的权限在不同系统上有不同表示。如果在运行过程中发现不能非应用或锁屏界面显示很可能就是系统上有特殊权限限制了，需要自行找到对应权限授权。</string>
+
 </resources>
