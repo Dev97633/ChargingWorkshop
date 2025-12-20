@@ -42,8 +42,17 @@
         app:layout_constraintEnd_toEndOf="parent">
 
         <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
+    android:id="@+id/fragment_container"
+    android:layout_width="0dp"
+    android:layout_height="0dp"
+    android:visibility="gone"
+    android:clickable="true"
+    android:focusable="true"
+    android:background="?attr/colorSurface"
+    app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"/>
 
             <ImageView
                 android:id="@+id/imgPreview"
