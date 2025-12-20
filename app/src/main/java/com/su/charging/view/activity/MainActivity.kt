@@ -1,6 +1,11 @@
 package com.su.charging.view.activity
 
 import android.app.Activity
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.BatteryManager
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
@@ -15,24 +20,56 @@ import com.su.charging.view.fragment.SettingsFragmentCompat
 
 class MainActivity : AppCompatActivity() {
 
+    private lateinit var tvStatus: TextView
+    private lateinit var tvBattery: TextView
+    private lateinit var fragmentContainer: View
+
+    private val batteryReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent == null) return
+
+            val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+            val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+            val status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
+
+            val percent = if (level >= 0 && scale > 0) {
+                (level * 100) / scale
+            } else {
+                0
+            }
+
+            tvBattery.text = "$percent%"
+
+            tvStatus.text = when (status) {
+                BatteryManager.BATTERY_STATUS_CHARGING -> "Charging"
+                BatteryManager.BATTERY_STATUS_FULL -> "Fully Charged"
+                else -> "Not Charging"
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // 🔐 Keep overlay permission check (IMPORTANT)
+        // 🔐 Overlay permission check (IMPORTANT)
         if (!PermissionUtils.INS.checkWindowPermission(this)) {
             PermissionBottomSheetFragment.open(this)
         }
 
         // 🎯 UI references
+        val btnSelect = findViewById<Button>(R.id.btnSelect)
         val btnSettings = findViewById<Button>(R.id.btnSettings)
-        val tvStatus = findViewById<TextView>(R.id.tvStatus)
-        val tvBattery = findViewById<TextView>(R.id.tvBattery)
-        val fragmentContainer = findViewById<View>(R.id.fragment_container)
 
-        // 🧪 Temporary values (will replace with real logic later)
-        tvStatus.text = "Not Charging"
-        tvBattery.text = "80%"
+        tvStatus = findViewById(R.id.tvStatus)
+        tvBattery = findViewById(R.id.tvBattery)
+        fragmentContainer = findViewById(R.id.fragment_container)
+
+        // 🎬 Select Animation (TEMP action)
+        btnSelect.setOnClickListener {
+            tip("Select Animation clicked")
+            // TODO: Open video picker here
+        }
 
         // ⚙ Open Settings Fragment
         btnSettings.setOnClickListener {
@@ -43,12 +80,15 @@ class MainActivity : AppCompatActivity() {
                 .addToBackStack(null)
                 .commit()
         }
+
+        // 🔋 Start battery monitoring
+        registerReceiver(
+            batteryReceiver,
+            IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+        )
     }
 
-    // 🔙 Handle back press properly
     override fun onBackPressed() {
-        val fragmentContainer = findViewById<View>(R.id.fragment_container)
-
         // Close settings first
         if (fragmentContainer.visibility == View.VISIBLE) {
             fragmentContainer.visibility = View.GONE
@@ -56,7 +96,7 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        // Keep original charging service behavior
+        // Preserve original charging behavior
         if (ChargingService.isOpen) {
             moveTaskToBack(true)
         } else {
@@ -64,8 +104,16 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // 🔔 Utility toast function (kept from original)
-    fun Activity.tip(msg: String) {
-        Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
+    override fun onDestroy() {
+        super.onDestroy()
+        try {
+            unregisterReceiver(batteryReceiver)
+        } catch (_: Exception) {
+        }
+    }
+
+    // 🔔 Utility toast function
+    private fun Activity.tip(msg: String) {
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
     }
 }
