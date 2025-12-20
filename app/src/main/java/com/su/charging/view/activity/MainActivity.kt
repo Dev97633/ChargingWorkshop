@@ -5,10 +5,10 @@ import android.content.*
 import android.net.Uri
 import android.os.BatteryManager
 import android.os.Bundle
-import android.provider.DocumentsContract
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
+import android.widget.VideoView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.su.charging.R
@@ -25,6 +25,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var tvStatus: TextView
     private lateinit var tvBattery: TextView
+    private lateinit var videoPreview: VideoView
     private lateinit var fragmentContainer: View
 
     /* ================= BATTERY RECEIVER ================= */
@@ -54,7 +55,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // 🔐 Overlay permission check
+        // 🔐 Overlay permission
         if (!PermissionUtils.INS.checkWindowPermission(this)) {
             PermissionBottomSheetFragment.open(this)
         }
@@ -65,9 +66,10 @@ class MainActivity : AppCompatActivity() {
 
         tvStatus = findViewById(R.id.tvStatus)
         tvBattery = findViewById(R.id.tvBattery)
+        videoPreview = findViewById(R.id.videoPreview)
         fragmentContainer = findViewById(R.id.fragment_container)
 
-        // 🎬 Select Animation (CLASSIC & SAFE)
+        // 🎬 Select Animation
         btnSelect.setOnClickListener {
             val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE)
@@ -98,6 +100,9 @@ class MainActivity : AppCompatActivity() {
             batteryReceiver,
             IntentFilter(Intent.ACTION_BATTERY_CHANGED)
         )
+
+        // ▶ Load preview if already selected
+        loadPreviewAnimation()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -118,7 +123,24 @@ class MainActivity : AppCompatActivity() {
                 .putString("charging_animation_uri", uri.toString())
                 .apply()
 
+            // ▶ Update preview instantly
+            loadPreviewAnimation()
+
             tip("Animation selected ✔")
+        }
+    }
+
+    private fun loadPreviewAnimation() {
+        val uriStr = getSharedPreferences("charging_prefs", MODE_PRIVATE)
+            .getString("charging_animation_uri", null) ?: return
+
+        val uri = Uri.parse(uriStr)
+
+        videoPreview.setVideoURI(uri)
+        videoPreview.setOnPreparedListener { mp ->
+            mp.isLooping = true
+            mp.setVolume(0f, 0f)
+            videoPreview.start()
         }
     }
 
