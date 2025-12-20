@@ -48,6 +48,27 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /* ================= VIDEO PICKER ================= */
+
+    private val videoPicker =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+            if (uri == null) return@registerForActivityResult
+
+            // 🔒 Persist permission (VERY IMPORTANT)
+            contentResolver.takePersistableUriPermission(
+                uri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION
+            )
+
+            // 💾 Save selected animation
+            getSharedPreferences("charging_prefs", MODE_PRIVATE)
+                .edit()
+                .putString("charging_animation_uri", uri.toString())
+                .apply()
+
+            tip("Animation selected ✔")
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -67,8 +88,7 @@ class MainActivity : AppCompatActivity() {
 
         // 🎬 Select Animation (TEMP action)
         btnSelect.setOnClickListener {
-            tip("Select Animation clicked")
-            // TODO: Open video picker here
+            videoPicker.launch(arrayOf("video/*"))
         }
 
         // ⚙ Open Settings Fragment
