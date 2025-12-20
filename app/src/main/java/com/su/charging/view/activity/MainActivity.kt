@@ -8,11 +8,11 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
-import android.widget.VideoView
 import android.widget.Toast
+import android.widget.VideoView
 import androidx.appcompat.app.AppCompatActivity
-import com.su.charging.R
 import com.su.charging.ChargingService
+import com.su.charging.R
 import com.su.charging.util.PermissionUtils
 import com.su.charging.view.fragment.PermissionBottomSheetFragment
 import com.su.charging.view.fragment.SettingsFragmentCompat
@@ -25,8 +25,8 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var tvStatus: TextView
     private lateinit var tvBattery: TextView
-    private lateinit var videoPreview: VideoView
     private lateinit var fragmentContainer: View
+    private lateinit var videoPreview: VideoView
 
     /* ================= BATTERY RECEIVER ================= */
 
@@ -66,8 +66,11 @@ class MainActivity : AppCompatActivity() {
 
         tvStatus = findViewById(R.id.tvStatus)
         tvBattery = findViewById(R.id.tvBattery)
-        videoPreview = findViewById(R.id.videoPreview)
         fragmentContainer = findViewById(R.id.fragment_container)
+        videoPreview = findViewById(R.id.videoPreview)
+
+        // ▶ Load saved animation preview (if exists)
+        loadSavedPreview()
 
         // 🎬 Select Animation
         btnSelect.setOnClickListener {
@@ -95,54 +98,73 @@ class MainActivity : AppCompatActivity() {
                 .commit()
         }
 
-        // 🔋 Battery
+        // 🔋 Battery listener
         registerReceiver(
             batteryReceiver,
             IntentFilter(Intent.ACTION_BATTERY_CHANGED)
         )
-
-        // ▶ Load preview if already selected
-        loadPreviewAnimation()
     }
+
+    /* ================= VIDEO PREVIEW ================= */
+
+    private fun loadSavedPreview() {
+        val uriString = getSharedPreferences("charging_prefs", MODE_PRIVATE)
+            .getString("charging_animation_uri", null)
+
+        uriString?.let {
+            showPreview(Uri.parse(it))
+        }
+    }
+
+    private fun showPreview(uri: Uri) {
+        videoPreview.setVideoURI(uri)
+
+        videoPreview.setOnPreparedListener { mp ->
+            mp.isLooping = true
+            mp.setVolume(0f, 0f)
+
+            val videoRatio = mp.videoWidth / mp.videoHeight.toFloat()
+            val viewRatio = videoPreview.width / videoPreview.height.toFloat()
+
+            if (videoRatio > viewRatio) {
+                videoPreview.scaleX = videoRatio / viewRatio
+                videoPreview.scaleY = 1f
+            } else {
+                videoPreview.scaleY = viewRatio / videoRatio
+                videoPreview.scaleX = 1f
+            }
+
+            videoPreview.alpha = 0f
+            videoPreview.animate().alpha(1f).setDuration(300).start()
+
+            videoPreview.start()
+        }
+    }
+
+    /* ================= ACTIVITY RESULT ================= */
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
         if (requestCode == REQ_SELECT_VIDEO && resultCode == Activity.RESULT_OK) {
-            val uri: Uri = data?.data ?: return
+            val uri = data?.data ?: return
 
-            // 🔒 Persist permission
             contentResolver.takePersistableUriPermission(
                 uri,
                 Intent.FLAG_GRANT_READ_URI_PERMISSION
             )
 
-            // 💾 Save animation
             getSharedPreferences("charging_prefs", MODE_PRIVATE)
                 .edit()
                 .putString("charging_animation_uri", uri.toString())
                 .apply()
 
-            // ▶ Update preview instantly
-            loadPreviewAnimation()
-
+            showPreview(uri)
             tip("Animation selected ✔")
         }
     }
 
-    private fun loadPreviewAnimation() {
-        val uriStr = getSharedPreferences("charging_prefs", MODE_PRIVATE)
-            .getString("charging_animation_uri", null) ?: return
-
-        val uri = Uri.parse(uriStr)
-
-        videoPreview.setVideoURI(uri)
-        videoPreview.setOnPreparedListener { mp ->
-            mp.isLooping = true
-            mp.setVolume(0f, 0f)
-            videoPreview.start()
-        }
-    }
+    /* ================= BACK PRESS ================= */
 
     override fun onBackPressed() {
         if (fragmentContainer.visibility == View.VISIBLE) {
