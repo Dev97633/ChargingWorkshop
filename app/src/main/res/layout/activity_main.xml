@@ -58,12 +58,15 @@
                 android:scaleType="centerCrop"/>
 
             <TextView
-                android:id="@+id/tvBattery"
-                android:text="80%"
-                android:textSize="32sp"
-                android:textStyle="bold"
-                android:textColor="@android:color/white"
-                android:layout_gravity="center"/>
+    android:id="@+id/tvBattery"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="80%"
+    android:textSize="32sp"
+    android:textStyle="bold"
+    android:textColor="@android:color/white"
+    android:layout_gravity="center"/>
+
 
         </FrameLayout>
     </com.google.android.material.card.MaterialCardView>
