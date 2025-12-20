@@ -76,6 +76,12 @@ class MainActivity : AppCompatActivity() {
             fragmentContainer.visibility = View.VISIBLE
 
             supportFragmentManager.beginTransaction()
+            .setCustomAnimations(
+            android.R.anim.fade_in,
+            android.R.anim.fade_out,
+            android.R.anim.fade_in,
+            android.R.anim.fade_out
+        )
                 .replace(R.id.fragment_container, SettingsFragmentCompat())
                 .addToBackStack(null)
                 .commit()
