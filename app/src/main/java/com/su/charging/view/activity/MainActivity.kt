@@ -1,12 +1,11 @@
 package com.su.charging.view.activity
 
 import android.app.Activity
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
+import android.content.*
+import android.net.Uri
 import android.os.BatteryManager
 import android.os.Bundle
+import android.provider.DocumentsContract
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
@@ -20,9 +19,15 @@ import com.su.charging.view.fragment.SettingsFragmentCompat
 
 class MainActivity : AppCompatActivity() {
 
+    companion object {
+        private const val REQ_SELECT_VIDEO = 1001
+    }
+
     private lateinit var tvStatus: TextView
     private lateinit var tvBattery: TextView
     private lateinit var fragmentContainer: View
+
+    /* ================= BATTERY RECEIVER ================= */
 
     private val batteryReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -32,11 +37,8 @@ class MainActivity : AppCompatActivity() {
             val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
             val status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
 
-            val percent = if (level >= 0 && scale > 0) {
-                (level * 100) / scale
-            } else {
-                0
-            }
+            val percent =
+                if (level >= 0 && scale > 0) (level * 100) / scale else 0
 
             tvBattery.text = "$percent%"
 
@@ -48,37 +50,16 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /* ================= VIDEO PICKER ================= */
-
-    private val videoPicker =
-        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
-            if (uri == null) return@registerForActivityResult
-
-            // 🔒 Persist permission (VERY IMPORTANT)
-            contentResolver.takePersistableUriPermission(
-                uri,
-                Intent.FLAG_GRANT_READ_URI_PERMISSION
-            )
-
-            // 💾 Save selected animation
-            getSharedPreferences("charging_prefs", MODE_PRIVATE)
-                .edit()
-                .putString("charging_animation_uri", uri.toString())
-                .apply()
-
-            tip("Animation selected ✔")
-        }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // 🔐 Overlay permission check (IMPORTANT)
+        // 🔐 Overlay permission check
         if (!PermissionUtils.INS.checkWindowPermission(this)) {
             PermissionBottomSheetFragment.open(this)
         }
 
-        // 🎯 UI references
+        // 🎯 UI
         val btnSelect = findViewById<Button>(R.id.btnSelect)
         val btnSettings = findViewById<Button>(R.id.btnSettings)
 
@@ -86,43 +67,68 @@ class MainActivity : AppCompatActivity() {
         tvBattery = findViewById(R.id.tvBattery)
         fragmentContainer = findViewById(R.id.fragment_container)
 
-        // 🎬 Select Animation (TEMP action)
+        // 🎬 Select Animation (CLASSIC & SAFE)
         btnSelect.setOnClickListener {
-            videoPicker.launch(arrayOf("video/*"))
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "video/*"
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+            }
+            startActivityForResult(intent, REQ_SELECT_VIDEO)
         }
 
-        // ⚙ Open Settings Fragment
+        // ⚙ Settings
         btnSettings.setOnClickListener {
             fragmentContainer.visibility = View.VISIBLE
-
             supportFragmentManager.beginTransaction()
-            .setCustomAnimations(
-            android.R.anim.fade_in,
-            android.R.anim.fade_out,
-            android.R.anim.fade_in,
-            android.R.anim.fade_out
-        )
+                .setCustomAnimations(
+                    android.R.anim.fade_in,
+                    android.R.anim.fade_out,
+                    android.R.anim.fade_in,
+                    android.R.anim.fade_out
+                )
                 .replace(R.id.fragment_container, SettingsFragmentCompat())
                 .addToBackStack(null)
                 .commit()
         }
 
-        // 🔋 Start battery monitoring
+        // 🔋 Battery
         registerReceiver(
             batteryReceiver,
             IntentFilter(Intent.ACTION_BATTERY_CHANGED)
         )
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == REQ_SELECT_VIDEO && resultCode == Activity.RESULT_OK) {
+            val uri: Uri = data?.data ?: return
+
+            // 🔒 Persist permission
+            contentResolver.takePersistableUriPermission(
+                uri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION
+            )
+
+            // 💾 Save animation
+            getSharedPreferences("charging_prefs", MODE_PRIVATE)
+                .edit()
+                .putString("charging_animation_uri", uri.toString())
+                .apply()
+
+            tip("Animation selected ✔")
+        }
+    }
+
     override fun onBackPressed() {
-        // Close settings first
         if (fragmentContainer.visibility == View.VISIBLE) {
             fragmentContainer.visibility = View.GONE
             supportFragmentManager.popBackStack()
             return
         }
 
-        // Preserve original charging behavior
         if (ChargingService.isOpen) {
             moveTaskToBack(true)
         } else {
@@ -134,11 +140,9 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         try {
             unregisterReceiver(batteryReceiver)
-        } catch (_: Exception) {
-        }
+        } catch (_: Exception) {}
     }
 
-    // 🔔 Utility toast function
     private fun Activity.tip(msg: String) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
     }
